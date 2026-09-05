@@ -1,0 +1,10 @@
+GET http://localhost:5241/shifts
+###
+
+POST http://localhost:5241/shifts
+Content-Type: application/json
+
+{
+    "date": "2026-09-06",
+    "managerId": 1
+}
