@@ -83,6 +83,16 @@ public class ShiftDbService : IShiftDbService
         return shift;
     }
 
+    //Update
+    public async void UpdateShiftByIdAsync(int id, UpdateShiftDto shift)
+    {
+        var shiftToUpdate = await _db.Shifts.FirstOrDefaultAsync(s => s.Id == id);
+
+        shiftToUpdate.ManagerId = shift.ManagerId;
+
+        await _db.SaveChangesAsync();
+    }
+
     //Task//
     //Create
     public async Task<int> AddSubTaskByIdAsync(SubTask subTask, int connectedTaskId)

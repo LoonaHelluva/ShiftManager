@@ -27,6 +27,7 @@ public interface IShiftDbService
     Task<List<Shift>> GetShiftsAsync();
     Task<Shift> GetShiftByIdAsync(int id);
     //Updaters
+    void UpdateShiftByIdAsync(int id, UpdateShiftDto shift);
 
     //Deleters
 }
