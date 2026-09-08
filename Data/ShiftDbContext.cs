@@ -9,7 +9,7 @@ public class ShiftDbContext : DbContext
 
     public DbSet<StaffMember> StaffMembers { get; set; }
     public DbSet<Helicopter> Helicopters { get; set; }
-    public DbSet<Task> Tasks { get; set; }
+    public DbSet<HeliTask> Tasks { get; set; }
     public DbSet<SubTask> SubTasks { get; set; }
     public DbSet<Shift> Shifts { get; set; }
 }

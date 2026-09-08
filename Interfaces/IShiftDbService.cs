@@ -12,8 +12,8 @@ public interface IShiftDbService
     Task<Shift> AddShiftAsync(AddShiftDto shift);
 
     //Tasks
-    Task<int> AddTaskAsync(Task task);
-    Task<int> AddTaskWithSubTaskAsync(Task task, SubTask subTask);
+    Task<int> AddTaskAsync(HeliTask task);
+    Task<int> AddTaskWithSubTaskAsync(HeliTask task, SubTask subTask);
     Task<int> AddSubTaskByIdAsync(SubTask subTask, int connectedTaskId);
 
     //Reader

@@ -78,12 +78,12 @@ public class ShiftDbService : IShiftDbService
         throw new NotImplementedException();
     }
 
-    public async Task<int> AddTaskAsync(Task task)
+    public async Task<int> AddTaskAsync(HeliTask task)
     {
         throw new NotImplementedException();
     }
 
-    public async Task<int> AddTaskWithSubTaskAsync(Task task, SubTask subTask)
+    public async Task<int> AddTaskWithSubTaskAsync(HeliTask task, SubTask subTask)
     {
         throw new NotImplementedException();
     }

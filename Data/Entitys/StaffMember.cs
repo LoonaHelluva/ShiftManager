@@ -13,7 +13,7 @@ public class StaffMember
     [Required] public bool IsManager { get; set; }
     public bool IsNightShift = false;
 
-    public List<Task> Tasks = new();
+    public List<HeliTask> Tasks = new();
     public List<Shift> Shifts = new();
 
     public StaffMember(string name, int armyNumber, bool isManager)

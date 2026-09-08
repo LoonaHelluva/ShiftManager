@@ -10,7 +10,7 @@ public class Shift
 
 
     [Required] public int ManagerId { get; set; }
-    public List<Task> ManagerTasks { get; set; } = new();
+    public List<HeliTask> ManagerTasks { get; set; } = new();
     public List<Helicopter> Helicopters { get; set; } = new();
     public List<StaffMember> StaffMembers { get; set; } = new();
 

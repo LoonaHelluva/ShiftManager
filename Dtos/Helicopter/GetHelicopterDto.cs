@@ -5,6 +5,6 @@ public record GetHeliDto(
     int TailNum,
     string Usability,
     string FlightStatus,
-    List<Task> Tasks,
+    List<HeliTask> Tasks,
     List<Shift> Shifts
 );

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HelipadManager;
 
-public class Task
+public class HeliTask
 {
     public int Id { get; set; }
     public string Title { get; set; } //REQUIRED
@@ -15,7 +15,7 @@ public class Task
     public int ShiftId { get; set; } //REQUIRED
     public int HeliId { get; set; } //REQUIRED
 
-    public Task(string title, int shiftId, int heliId)
+    public HeliTask(string title, int shiftId, int heliId)
     {
         Title = title;
         ShiftId = shiftId;

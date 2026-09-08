@@ -10,11 +10,13 @@ builder.Services.AddDbContext<ShiftDbContext>(options =>
 });
 
 builder.Services.AddScoped<IShiftDbService, ShiftDbService>();
+builder.Services.AddScoped<IHelicopterDbService, HelicopterDbService>();
 
 builder.Services.AddValidation();
 
 var app = builder.Build();
 
 app.MapShiftEndpoints();
+app.MapHelicopterGroupEndpoints();
 
 app.Run();
