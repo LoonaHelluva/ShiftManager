@@ -69,11 +69,11 @@ public static class HelicopterEndpoints
                 return Results.BadRequest();
             }
 
-            if (heliCheck.TailNum != -1)
+            if (heliCheck.TailNum == -1)
             {
-                if (heliCheck.Usability != null)
+                if (heliCheck.Usability == null)
                 {
-                    if (heliCheck.FlightStatus != null)
+                    if (heliCheck.FlightStatus == null)
                     {
                         return Results.BadRequest();
                     }
