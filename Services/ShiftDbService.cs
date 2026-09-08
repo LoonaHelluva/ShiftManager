@@ -20,18 +20,6 @@ public class ShiftDbService : IShiftDbService
         throw new NotImplementedException();
     }
 
-    //Helicopter//
-    //Create
-    public async Task<int> AddHelicopterAsync(Helicopter helicopter)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<int> AddHelicopterWithTasksAsync(Helicopter helicopter, List<Task> tasks)
-    {
-        throw new NotImplementedException();
-    }
-
     //Shift//
     //Create
     public async Task<Shift> AddShiftAsync(AddShiftDto shift)

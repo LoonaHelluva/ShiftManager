@@ -16,10 +16,6 @@ public interface IShiftDbService
     Task<int> AddTaskWithSubTaskAsync(Task task, SubTask subTask);
     Task<int> AddSubTaskByIdAsync(SubTask subTask, int connectedTaskId);
 
-    //Helicopters
-    Task<int> AddHelicopterAsync(Helicopter helicopter);
-    Task<int> AddHelicopterWithTasksAsync(Helicopter helicopter, List<Task> tasks);
-
     //Reader
     //Staff
 
