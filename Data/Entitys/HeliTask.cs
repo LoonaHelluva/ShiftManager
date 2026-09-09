@@ -6,7 +6,7 @@ namespace HelipadManager;
 public class HeliTask
 {
     public int Id { get; set; }
-    public string Title { get; set; } //REQUIRED
+    public string Title { get; set; } = String.Empty; //REQUIRED
     public string Desctiprion { get; set; } = String.Empty;
     public bool IsDone { get; set; } = false;
 
@@ -15,10 +15,16 @@ public class HeliTask
     public int ShiftId { get; set; } //REQUIRED
     public int HeliId { get; set; } //REQUIRED
 
-    public HeliTask(string title, int shiftId, int heliId)
+    private HeliTask()
+    {
+    }
+
+    public HeliTask(string title, string description, int shiftId, int heliId, List<StaffMember> executor)
     {
         Title = title;
+        Desctiprion = description;
         ShiftId = shiftId;
         HeliId = heliId;
+        Executors = executor;
     }
 }

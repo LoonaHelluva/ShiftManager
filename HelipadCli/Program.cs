@@ -22,6 +22,11 @@ while (true)
     Console.WriteLine("2. Добавить вертолёт");
     Console.WriteLine("3. Обновить вертолёт");
     Console.WriteLine("4. Удалить вертолёт");
+    Console.WriteLine("5. Получить список задач");
+    Console.WriteLine("6. Получить задачу по Id");
+    Console.WriteLine("7. Добавить задачу");
+    Console.WriteLine("8. Обновить задачу");
+    Console.WriteLine("9. Удалить задачу");
     Console.WriteLine("0. Выход");
     Console.Write("Выберите действие: ");
 
@@ -42,6 +47,21 @@ while (true)
                 break;
             case "4":
                 await DeleteHelicopterAsync();
+                break;
+            case "5":
+                await SendAsync(() => httpClient.GetAsync("/tasks/"));
+                break;
+            case "6":
+                await GetTaskAsync();
+                break;
+            case "7":
+                await CreateTaskAsync();
+                break;
+            case "8":
+                await UpdateTaskAsync();
+                break;
+            case "9":
+                await DeleteTaskAsync();
                 break;
             case "0":
                 return;
@@ -93,6 +113,67 @@ async Task DeleteHelicopterAsync()
     await SendAsync(() => httpClient.DeleteAsync($"/helis/{id}"));
 }
 
+async Task GetTaskAsync()
+{
+    int id = ReadInt("Id задачи: ");
+    await SendAsync(() => httpClient.GetAsync($"/tasks/{id}"));
+}
+
+async Task CreateTaskAsync()
+{
+    string title = ReadText("Title: ");
+    string description = ReadText("Description: ");
+    int heliId = ReadInt("Id вертолёта: ");
+    int shiftId = ReadInt("Id смены: ");
+    List<StaffMemberRequest> executor = ReadExecutors();
+
+    AddTaskRequest request = new(title, description, executor, heliId, shiftId);
+    await SendAsync(() => httpClient.PostAsJsonAsync("/tasks/", request, jsonOptions));
+}
+
+async Task UpdateTaskAsync()
+{
+    int id = ReadInt("Id задачи: ");
+    Console.WriteLine("Оставьте поле пустым, чтобы не менять его.");
+
+    string? title = ReadOptionalText("Title: ");
+    string? description = ReadOptionalText("Description: ");
+    bool? isDone = ReadOptionalBool("Is done (true/false): ");
+
+    if (title == null && description == null && isDone == null)
+    {
+        Console.WriteLine("Необходимо указать хотя бы одно поле для обновления.");
+        return;
+    }
+
+    UpdateTaskRequest request = new(title, description, isDone);
+    await SendAsync(() => httpClient.PutAsJsonAsync($"/tasks/{id}", request, jsonOptions));
+}
+
+async Task DeleteTaskAsync()
+{
+    int id = ReadInt("Id задачи: ");
+    await SendAsync(() => httpClient.DeleteAsync($"/tasks/{id}"));
+}
+
+List<StaffMemberRequest> ReadExecutors()
+{
+    int count = ReadNonNegativeInt("Количество исполнителей: ");
+    List<StaffMemberRequest> executors = new();
+
+    for (int index = 1; index <= count; index++)
+    {
+        Console.WriteLine($"Исполнитель {index}:");
+        int id = ReadInt("  Id: ");
+        string name = ReadText("  Name: ");
+        int armyNumber = ReadInt("  Army number: ");
+        bool isManager = ReadBool("  Is manager (true/false): ");
+        executors.Add(new StaffMemberRequest(id, name, armyNumber, isManager));
+    }
+
+    return executors;
+}
+
 async Task SendAsync(Func<Task<HttpResponseMessage>> sendRequest)
 {
     using HttpResponseMessage response = await sendRequest();
@@ -116,6 +197,52 @@ int ReadInt(string prompt)
         }
 
         Console.WriteLine("Введите целое число.");
+    }
+}
+
+int ReadNonNegativeInt(string prompt)
+{
+    while (true)
+    {
+        int value = ReadInt(prompt);
+        if (value >= 0)
+        {
+            return value;
+        }
+
+        Console.WriteLine("Введите неотрицательное число.");
+    }
+}
+
+bool ReadBool(string prompt)
+{
+    while (true)
+    {
+        Console.Write(prompt);
+        if (bool.TryParse(Console.ReadLine(), out bool value))
+        {
+            return value;
+        }
+
+        Console.WriteLine("Введите true или false.");
+    }
+}
+
+bool? ReadOptionalBool(string prompt)
+{
+    while (true)
+    {
+        string? input = ReadOptionalText(prompt);
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return null;
+        }
+        if (bool.TryParse(input, out bool value))
+        {
+            return value;
+        }
+
+        Console.WriteLine("Введите true, false или оставьте поле пустым.");
     }
 }
 
@@ -154,3 +281,6 @@ string TryFormatJson(string responseBody)
 
 record AddHelicopterRequest(int TailNum, string Usability, string FlightStatus);
 record UpdateHelicopterRequest(int TailNum = -1, string? Usability = null, string? FlightStatus = null);
+record AddTaskRequest(string Title, string Description, List<StaffMemberRequest> Executor, int HeliId, int ShiftId);
+record UpdateTaskRequest(string? Title = null, string? Description = null, bool? IsDone = null);
+record StaffMemberRequest(int Id, string Name, int ArmyNumber, bool IsManager);

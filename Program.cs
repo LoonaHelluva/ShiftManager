@@ -11,12 +11,20 @@ builder.Services.AddDbContext<ShiftDbContext>(options =>
 
 builder.Services.AddScoped<IShiftDbService, ShiftDbService>();
 builder.Services.AddScoped<IHelicopterDbService, HelicopterDbService>();
+builder.Services.AddScoped<ITaskDbService, TaskDbService>();
 
 builder.Services.AddValidation();
 
 var app = builder.Build();
 
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    ShiftDbContext db = scope.ServiceProvider.GetRequiredService<ShiftDbContext>();
+    db.Database.Migrate();
+}
+
 app.MapShiftEndpoints();
 app.MapHelicopterGroupEndpoints();
+app.MapTaskEndpoints();
 
 app.Run();

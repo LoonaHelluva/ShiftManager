@@ -10,7 +10,6 @@ public class ShiftDbService : IShiftDbService
     public ShiftDbService(ShiftDbContext db)
     {
         _db = db;
-        _db.Database.EnsureCreated();
     }
 
     //Staff//
