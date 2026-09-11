@@ -50,7 +50,7 @@ public static class TaskGoupEndpoints
             return next(context);
         });
         //POST
-        tasks.MapPost("/", async (AddHeliTaskDto taskToAdd, ITaskDbService dbService) =>
+        tasks.MapPost("/", async (AddTaskDto taskToAdd, ITaskDbService dbService) =>
         {
             HeliTask task = await dbService.AddTaskAsync(taskToAdd);
 
@@ -58,7 +58,7 @@ public static class TaskGoupEndpoints
         });
 
         //PUT
-        tasks.MapPut("/{id}", async (int id, UpdateHeliTaskDto updatedTask, ITaskDbService dbService) =>
+        tasks.MapPut("/{id}", async (int id, UpdateTaskDto updatedTask, ITaskDbService dbService) =>
         {
             try
             {
@@ -73,7 +73,7 @@ public static class TaskGoupEndpoints
         }).AddEndpointFilter(async (context, next) =>
         {
             int idCheck = context.GetArgument<int>(0);
-            UpdateHeliTaskDto taskCheck = context.GetArgument<UpdateHeliTaskDto>(1);
+            UpdateTaskDto taskCheck = context.GetArgument<UpdateTaskDto>(1);
 
             if (idCheck < 0)
             {

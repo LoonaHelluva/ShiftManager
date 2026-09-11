@@ -1,7 +1,7 @@
 namespace HelipadManager;
 
-public record AddHeliDto(
+public record AddHelicopterDto(
     int TailNum,
     string Usability,
     string FlightStatus
-    );
+);

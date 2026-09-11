@@ -6,15 +6,15 @@ namespace HelipadManager;
 public interface IHelicopterDbService
 {
     //Create
-    Task<Helicopter> AddHeliAsync(AddHeliDto helicopterDto);
+    Task<Helicopter> AddHeliAsync(AddHelicopterDto helicopterDto);
 
     //Read
-    Task<GetHeliDto> GetHeliByIdAsync(int id);
-    Task<GetHeliDto> GetHeliWithListsByIdAsync(int id);
-    Task<List<GetHeliDto>> GetHelisAsync();
+    Task<HelicopterDto> GetHeliByIdAsync(int id);
+    Task<HelicopterDto> GetHeliWithListsByIdAsync(int id);
+    Task<List<HelicopterDto>> GetHelisAsync();
 
     //Update
-    Task UpdateHeliByIdAsync(int id, UpdateHeliDto updatedHeli);
+    Task UpdateHeliByIdAsync(int id, UpdateHelicopterDto updatedHeli);
 
     //Delete
     Task DeleteHeliByIdAsync(int id);

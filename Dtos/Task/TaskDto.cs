@@ -1,6 +1,6 @@
 namespace HelipadManager;
 
-public record GetHeliTaskDto(
+public record TaskDto(
     int Id,
     string Title,
     string Description,

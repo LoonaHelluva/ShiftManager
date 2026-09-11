@@ -15,7 +15,7 @@ public static class HelicopterEndpoints
         {
             try
             {
-                List<GetHeliDto> helis = await dbService.GetHelisAsync();
+                List<HelicopterDto> helis = await dbService.GetHelisAsync();
 
                 return Results.Ok(helis);
             }
@@ -26,7 +26,7 @@ public static class HelicopterEndpoints
         });
 
         //POST
-        helis.MapPost("/", async (AddHeliDto heli, IHelicopterDbService dbService) =>
+        helis.MapPost("/", async (AddHelicopterDto heli, IHelicopterDbService dbService) =>
         {
             var newHeli = await dbService.AddHeliAsync(heli);
 
@@ -34,7 +34,7 @@ public static class HelicopterEndpoints
         })
         .AddEndpointFilter(async (context, next) =>
         {
-            var heliCheck = context.GetArgument<AddHeliDto>(0);
+            var heliCheck = context.GetArgument<AddHelicopterDto>(0);
 
             if (heliCheck.TailNum <= 0)
             {
@@ -53,7 +53,7 @@ public static class HelicopterEndpoints
         });
 
         //PUT
-        helis.MapPut("/{id}", async (int id, UpdateHeliDto updatedHeli, IHelicopterDbService dbService) =>
+        helis.MapPut("/{id}", async (int id, UpdateHelicopterDto updatedHeli, IHelicopterDbService dbService) =>
         {
             await dbService.UpdateHeliByIdAsync(id, updatedHeli);
 
@@ -62,7 +62,7 @@ public static class HelicopterEndpoints
         .AddEndpointFilter(async (context, next) =>
         {
             int idCheck = context.GetArgument<int>(0);
-            var heliCheck = context.GetArgument<UpdateHeliDto>(1);
+            var heliCheck = context.GetArgument<UpdateHelicopterDto>(1);
 
             if (heliCheck == null || idCheck < 0)
             {

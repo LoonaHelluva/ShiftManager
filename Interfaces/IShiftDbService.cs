@@ -4,25 +4,16 @@ namespace HelipadManager;
 
 public interface IShiftDbService
 {
-    //Creators
-    //Staff
-    Task<int> AddStaffMemberAsync(StaffMember staffMember);
+    //Creat
+    Task<ShiftDto> AddShiftAsync(AddShiftDto shift);
 
-    //Shift
-    Task<Shift> AddShiftAsync(AddShiftDto shift);
+    //Read
+    Task<List<ShiftDto>> GetShiftsAsync();
+    Task<ShiftDto> GetShiftByIdAsync(int id);
 
-    //Tasks
-    Task<int> AddTaskAsync(HeliTask task);
-    Task<int> AddTaskWithSubTaskAsync(HeliTask task, SubTask subTask);
-    Task<int> AddSubTaskByIdAsync(SubTask subTask, int connectedTaskId);
+    //Update
+    Task UpdateShiftById(UpdateShiftDto updatedShift);
 
-    //Reader
-    //Staff
-
-    //Shift
-    Task<List<Shift>> GetShiftsAsync();
-    Task<Shift> GetShiftByIdAsync(int id);
-    //Updaters
-
-    //Deleters
+    //Delete
+    Task DeleteShiftById(int id);
 }

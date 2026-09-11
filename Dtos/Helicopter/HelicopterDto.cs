@@ -1,6 +1,6 @@
 namespace HelipadManager;
 
-public record GetHeliDto(
+public record HelicopterDto(
     int Id,
     int TailNum,
     string Usability,

@@ -13,7 +13,7 @@ public class HelicopterDbService : IHelicopterDbService
     }
 
     //Create
-    public async Task<Helicopter> AddHeliAsync(AddHeliDto helicopterDto)
+    public async Task<Helicopter> AddHeliAsync(AddHelicopterDto helicopterDto)
     {
         Helicopter newHelicopter = new(
                                         helicopterDto.Usability,
@@ -27,7 +27,7 @@ public class HelicopterDbService : IHelicopterDbService
     }
 
     //Read
-    public async Task<GetHeliDto> GetHeliByIdAsync(int id)
+    public async Task<HelicopterDto> GetHeliByIdAsync(int id)
     {
         var helicopter = await _db.Helicopters.AsNoTracking().FirstOrDefaultAsync(h => h.Id == id);
 
@@ -36,7 +36,7 @@ public class HelicopterDbService : IHelicopterDbService
             throw new KeyNotFoundException($"Helicopter with id {id} was not found");
         }
 
-        GetHeliDto returnHeli = new GetHeliDto(
+        HelicopterDto returnHeli = new HelicopterDto(
                                                 helicopter.Id,
                                                 helicopter.TailNum,
                                                 helicopter.Usability,
@@ -47,7 +47,7 @@ public class HelicopterDbService : IHelicopterDbService
 
         return returnHeli;
     }
-    public async Task<GetHeliDto> GetHeliWithListsByIdAsync(int id)
+    public async Task<HelicopterDto> GetHeliWithListsByIdAsync(int id)
     {
         var helicopter = await _db.Helicopters.FirstOrDefaultAsync(h => h.Id == id);
 
@@ -56,7 +56,7 @@ public class HelicopterDbService : IHelicopterDbService
             throw new KeyNotFoundException($"Helicopter with id {id} was not found");
         }
 
-        GetHeliDto returnHeli = new GetHeliDto(
+        HelicopterDto returnHeli = new HelicopterDto(
                                                 helicopter.Id,
                                                 helicopter.TailNum,
                                                 helicopter.Usability,
@@ -67,7 +67,7 @@ public class HelicopterDbService : IHelicopterDbService
 
         return returnHeli;
     }
-    public async Task<List<GetHeliDto>> GetHelisAsync()
+    public async Task<List<HelicopterDto>> GetHelisAsync()
     {
         List<Helicopter>? helis = await _db.Helicopters.AsNoTracking().ToListAsync();
 
@@ -76,11 +76,11 @@ public class HelicopterDbService : IHelicopterDbService
             throw new KeyNotFoundException($"Helicopter was not found");
         }
 
-        List<GetHeliDto> returnHelis = new List<GetHeliDto>();
+        List<HelicopterDto> returnHelis = new List<HelicopterDto>();
 
         foreach (var h in helis)
         {
-            returnHelis.Add(new GetHeliDto(
+            returnHelis.Add(new HelicopterDto(
                                                 h.Id,
                                                 h.TailNum,
                                                 h.Usability,
@@ -94,7 +94,7 @@ public class HelicopterDbService : IHelicopterDbService
     }
 
     //Update
-    public async Task UpdateHeliByIdAsync(int id, UpdateHeliDto updatedHeli)
+    public async Task UpdateHeliByIdAsync(int id, UpdateHelicopterDto updatedHeli)
     {
         Helicopter? heliToUpdate = await _db.Helicopters.FirstOrDefaultAsync(h => h.Id == id);
 
@@ -103,9 +103,9 @@ public class HelicopterDbService : IHelicopterDbService
             throw new KeyNotFoundException($"Helicopter with id {id} was not found");
         }
 
-        if (updatedHeli.TailNum != -1)
+        if (updatedHeli.TailNum != null)
         {
-            heliToUpdate.TailNum = updatedHeli.TailNum;
+            heliToUpdate.TailNum = updatedHeli.TailNum.Value;
         }
         if (updatedHeli.Usability != null)
         {

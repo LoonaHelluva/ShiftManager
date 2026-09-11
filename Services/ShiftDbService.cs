@@ -12,78 +12,91 @@ public class ShiftDbService : IShiftDbService
         _db = db;
     }
 
-    //Staff//
     //Create
-    public async Task<int> AddStaffMemberAsync(StaffMember staffMember)
+    public async Task<ShiftDto> AddShiftAsync(AddShiftDto shift)
     {
-        throw new NotImplementedException();
-    }
-
-    //Shift//
-    //Create
-    public async Task<Shift> AddShiftAsync(AddShiftDto shift)
-    {
-        Shift newShift = new Shift(
-            shift.Date,
-            shift.ManagerId
-        );
+        Shift newShift = new Shift(shift.Date,
+                                   shift.ManagerId
+                                   );
 
         await _db.Shifts.AddAsync(newShift);
+        await _db.SaveChangesAsync();
 
-        try
-        {
-            await _db.SaveChangesAsync();
-        }
-        catch
-        {
-            return newShift;
-        }
+        ShiftDto shiftToSend = new ShiftDto(newShift.Id,
+                                            newShift.Date,
+                                            newShift.ManagerId
+                                            );
 
-        return newShift;
+        return shiftToSend;
     }
 
-    //Read
-    public async Task<List<Shift>> GetShiftsAsync()
+    //Reade
+    public async Task<ShiftDto> GetShiftByIdAsync(int id)
     {
-        List<Shift> shifts = new List<Shift>();
-        try
-        {
-            shifts = await _db.Shifts.ToListAsync<Shift>();
-        }
-        catch
-        {
-            return new List<Shift>();
-        }
-
-        return shifts;
-    }
-
-    public async Task<Shift> GetShiftByIdAsync(int id)
-    {
-        var shift = await _db.Shifts.FirstOrDefaultAsync(s => s.Id == id);
+        Shift? shift = await _db.Shifts.FirstOrDefaultAsync(s => s.Id == id);
 
         if (shift == null)
         {
-            return new Shift(DateOnly.FromDayNumber(00 - 00 - 0000), -1);
+            throw new KeyNotFoundException($"There is no Shift with id:{id}");
         }
 
-        return shift;
+        ShiftDto shiftToSend = new ShiftDto(shift.Id, shift.Date, shift.ManagerId);
+        return shiftToSend;
     }
 
-    //Task//
-    //Create
-    public async Task<int> AddSubTaskByIdAsync(SubTask subTask, int connectedTaskId)
+    public async Task<List<ShiftDto>> GetShiftsAsync()
     {
-        throw new NotImplementedException();
+        List<Shift> shifts = await _db.Shifts.AsNoTracking().ToListAsync();
+
+        if (shifts.Count == 0)
+        {
+            throw new KeyNotFoundException($"Shifts table is empty, you need to create shift");
+        }
+
+        List<ShiftDto> shiftDtos = new List<ShiftDto>();
+
+        foreach (var s in shifts)
+        {
+            shiftDtos.Add(new ShiftDto(s.Id, s.Date, s.ManagerId));
+        }
+
+        return shiftDtos;
     }
 
-    public async Task<int> AddTaskAsync(HeliTask task)
+    //Update
+    public async Task UpdateShiftById(UpdateShiftDto updatedShift)
     {
-        throw new NotImplementedException();
+        if (updatedShift == null)
+        {
+            throw new Exception($"The update entity can not be null");
+        }
+
+        Shift? shift = await _db.Shifts.FirstOrDefaultAsync(s => s.Id == updatedShift.Id);
+
+        if (shift == null)
+        {
+            throw new KeyNotFoundException($"Shift with id:{updatedShift.Id} was not found");
+        }
+
+        if (updatedShift.Date.HasValue)
+        {
+            shift.Date = updatedShift.Date.Value;
+        }
+        if (updatedShift.ManagerId.HasValue)
+        {
+            shift.ManagerId = updatedShift.ManagerId.Value;
+        }
+
+        await _db.SaveChangesAsync();
     }
 
-    public async Task<int> AddTaskWithSubTaskAsync(HeliTask task, SubTask subTask)
+    //Delete
+    public async Task DeleteShiftById(int id)
     {
-        throw new NotImplementedException();
+        try
+        {
+            await _db.Shifts.Where(s => s.Id == id).ExecuteDeleteAsync();
+        }
+        catch { }
     }
 }

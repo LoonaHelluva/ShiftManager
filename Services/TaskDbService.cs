@@ -14,7 +14,7 @@ public class TaskDbService : ITaskDbService
 
 
     //Create
-    public async Task<HeliTask> AddTaskAsync(AddHeliTaskDto task)
+    public async Task<HeliTask> AddTaskAsync(AddTaskDto task)
     {
         HeliTask newTask = new HeliTask(
             task.Title,
@@ -56,7 +56,7 @@ public class TaskDbService : ITaskDbService
 
 
     //Update
-    public async Task UpdateTaskByIdAsync(int id, UpdateHeliTaskDto updatedTask)
+    public async Task UpdateTaskByIdAsync(int id, UpdateTaskDto updatedTask)
     {
         HeliTask? taskToUpdate = await _db.Tasks.FirstOrDefaultAsync(t => t.Id == id);
 

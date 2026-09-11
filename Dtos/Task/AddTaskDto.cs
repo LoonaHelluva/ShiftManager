@@ -1,6 +1,6 @@
 namespace HelipadManager;
 
-public record AddHeliTaskDto(
+public record AddTaskDto(
     string Title,
     string Description,
     List<StaffMember> Executor,

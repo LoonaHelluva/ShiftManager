@@ -1,6 +1,7 @@
 namespace HelipadManager;
 
-public record class ShiftDto
-{
-
-}
+public record ShiftDto(
+    int Id,
+    DateOnly Date,
+    int ManagerId
+);

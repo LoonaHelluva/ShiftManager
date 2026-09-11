@@ -1,6 +1,7 @@
 namespace HelipadManager;
 
-public record class UpdateHeliTaskDto(
+public record UpdateTaskDto(
+    int Id,
     string? Title = null,
     string? Description = null,
     bool? IsDone = null
