@@ -27,6 +27,16 @@ while (true)
     Console.WriteLine("7. Добавить задачу");
     Console.WriteLine("8. Обновить задачу");
     Console.WriteLine("9. Удалить задачу");
+    Console.WriteLine("10. Получить список смен");
+    Console.WriteLine("11. Получить смену по Id");
+    Console.WriteLine("12. Добавить смену");
+    Console.WriteLine("13. Обновить смену");
+    Console.WriteLine("14. Удалить смену");
+    Console.WriteLine("15. Получить список сотрудников");
+    Console.WriteLine("16. Получить сотрудника по Id");
+    Console.WriteLine("17. Добавить сотрудника");
+    Console.WriteLine("18. Обновить сотрудника");
+    Console.WriteLine("19. Удалить сотрудника");
     Console.WriteLine("0. Выход");
     Console.Write("Выберите действие: ");
 
@@ -62,6 +72,36 @@ while (true)
                 break;
             case "9":
                 await DeleteTaskAsync();
+                break;
+            case "10":
+                await SendAsync(() => httpClient.GetAsync("/shifts/"));
+                break;
+            case "11":
+                await GetShiftAsync();
+                break;
+            case "12":
+                await CreateShiftAsync();
+                break;
+            case "13":
+                await UpdateShiftAsync();
+                break;
+            case "14":
+                await DeleteShiftAsync();
+                break;
+            case "15":
+                await SendAsync(() => httpClient.GetAsync("/staff/"));
+                break;
+            case "16":
+                await GetStaffAsync();
+                break;
+            case "17":
+                await CreateStaffAsync();
+                break;
+            case "18":
+                await UpdateStaffAsync();
+                break;
+            case "19":
+                await DeleteStaffAsync();
                 break;
             case "0":
                 return;
@@ -156,6 +196,86 @@ async Task DeleteTaskAsync()
     await SendAsync(() => httpClient.DeleteAsync($"/tasks/{id}"));
 }
 
+async Task GetShiftAsync()
+{
+    int id = ReadInt("Id смены: ");
+    await SendAsync(() => httpClient.GetAsync($"/shifts/{id}"));
+}
+
+async Task CreateShiftAsync()
+{
+    DateOnly date = ReadDate("Date (yyyy-MM-dd): ");
+    int managerId = ReadInt("Id менеджера: ");
+
+    AddShiftRequest request = new(date, managerId);
+    await SendAsync(() => httpClient.PostAsJsonAsync("/shifts/", request, jsonOptions));
+}
+
+async Task UpdateShiftAsync()
+{
+    int id = ReadInt("Id смены: ");
+    Console.WriteLine("Оставьте поле пустым, чтобы не менять его.");
+
+    DateOnly? date = ReadOptionalDate("Date (yyyy-MM-dd): ");
+    int? managerId = ReadOptionalInt("Id менеджера: ");
+
+    if (date == null && managerId == null)
+    {
+        Console.WriteLine("Необходимо указать хотя бы одно поле для обновления.");
+        return;
+    }
+
+    UpdateShiftRequest request = new(date, managerId);
+    await SendAsync(() => httpClient.PutAsJsonAsync($"/shifts/{id}", request, jsonOptions));
+}
+
+async Task DeleteShiftAsync()
+{
+    int id = ReadInt("Id смены: ");
+    await SendAsync(() => httpClient.DeleteAsync($"/shifts/{id}"));
+}
+
+async Task GetStaffAsync()
+{
+    int id = ReadInt("Id сотрудника: ");
+    await SendAsync(() => httpClient.GetAsync($"/staff/{id}"));
+}
+
+async Task CreateStaffAsync()
+{
+    string name = ReadText("Name: ");
+    int armyNumber = ReadInt("Army number: ");
+    bool isManager = ReadBool("Is manager (true/false): ");
+
+    AddStaffRequest request = new(name, armyNumber, isManager);
+    await SendAsync(() => httpClient.PostAsJsonAsync("/staff/", request, jsonOptions));
+}
+
+async Task UpdateStaffAsync()
+{
+    int id = ReadInt("Id сотрудника: ");
+    Console.WriteLine("Оставьте поле пустым, чтобы не менять его.");
+
+    string? name = ReadOptionalText("Name: ");
+    int? armyNumber = ReadOptionalInt("Army number: ");
+    bool? isManager = ReadOptionalBool("Is manager (true/false): ");
+
+    if (name == null && armyNumber == null && isManager == null)
+    {
+        Console.WriteLine("Необходимо указать хотя бы одно поле для обновления.");
+        return;
+    }
+
+    UpdateStaffRequest request = new(name, armyNumber, isManager);
+    await SendAsync(() => httpClient.PutAsJsonAsync($"/staff/{id}", request, jsonOptions));
+}
+
+async Task DeleteStaffAsync()
+{
+    int id = ReadInt("Id сотрудника: ");
+    await SendAsync(() => httpClient.DeleteAsync($"/staff/{id}"));
+}
+
 List<StaffMemberRequest> ReadExecutors()
 {
     int count = ReadNonNegativeInt("Количество исполнителей: ");
@@ -211,6 +331,56 @@ int ReadNonNegativeInt(string prompt)
         }
 
         Console.WriteLine("Введите неотрицательное число.");
+    }
+}
+
+int? ReadOptionalInt(string prompt)
+{
+    while (true)
+    {
+        string? input = ReadOptionalText(prompt);
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return null;
+        }
+        if (int.TryParse(input, out int value))
+        {
+            return value;
+        }
+
+        Console.WriteLine("Введите целое число или оставьте поле пустым.");
+    }
+}
+
+DateOnly ReadDate(string prompt)
+{
+    while (true)
+    {
+        Console.Write(prompt);
+        if (DateOnly.TryParse(Console.ReadLine(), out DateOnly value))
+        {
+            return value;
+        }
+
+        Console.WriteLine("Введите дату в формате yyyy-MM-dd.");
+    }
+}
+
+DateOnly? ReadOptionalDate(string prompt)
+{
+    while (true)
+    {
+        string? input = ReadOptionalText(prompt);
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return null;
+        }
+        if (DateOnly.TryParse(input, out DateOnly value))
+        {
+            return value;
+        }
+
+        Console.WriteLine("Введите дату в формате yyyy-MM-dd или оставьте поле пустым.");
     }
 }
 
@@ -284,3 +454,7 @@ record UpdateHelicopterRequest(int TailNum = -1, string? Usability = null, strin
 record AddTaskRequest(string Title, string Description, List<StaffMemberRequest> Executor, int HeliId, int ShiftId);
 record UpdateTaskRequest(string? Title = null, string? Description = null, bool? IsDone = null);
 record StaffMemberRequest(int Id, string Name, int ArmyNumber, bool IsManager);
+record AddShiftRequest(DateOnly Date, int ManagerId);
+record UpdateShiftRequest(DateOnly? Date = null, int? ManagerId = null);
+record AddStaffRequest(string Name, int ArmyNumber, bool IsManager);
+record UpdateStaffRequest(string? Name = null, int? ArmyNumber = null, bool? IsManager = null);

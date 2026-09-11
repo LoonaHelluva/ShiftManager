@@ -12,7 +12,7 @@ public interface IShiftDbService
     Task<ShiftDto> GetShiftByIdAsync(int id);
 
     //Update
-    Task UpdateShiftById(UpdateShiftDto updatedShift);
+    Task UpdateShiftById(int id, UpdateShiftDto updatedShift);
 
     //Delete
     Task DeleteShiftById(int id);

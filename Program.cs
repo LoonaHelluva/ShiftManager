@@ -12,6 +12,7 @@ builder.Services.AddDbContext<ShiftDbContext>(options =>
 builder.Services.AddScoped<IShiftDbService, ShiftDbService>();
 builder.Services.AddScoped<IHelicopterDbService, HelicopterDbService>();
 builder.Services.AddScoped<ITaskDbService, TaskDbService>();
+builder.Services.AddScoped<IStaffDbService, StaffDbService>();
 
 builder.Services.AddValidation();
 
@@ -26,5 +27,6 @@ using (IServiceScope scope = app.Services.CreateScope())
 app.MapShiftEndpoints();
 app.MapHelicopterGroupEndpoints();
 app.MapTaskEndpoints();
+app.MapStaffEndpoints();
 
 app.Run();

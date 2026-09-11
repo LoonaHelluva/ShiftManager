@@ -64,18 +64,18 @@ public class ShiftDbService : IShiftDbService
     }
 
     //Update
-    public async Task UpdateShiftById(UpdateShiftDto updatedShift)
+    public async Task UpdateShiftById(int id, UpdateShiftDto updatedShift)
     {
         if (updatedShift == null)
         {
             throw new Exception($"The update entity can not be null");
         }
 
-        Shift? shift = await _db.Shifts.FirstOrDefaultAsync(s => s.Id == updatedShift.Id);
+        Shift? shift = await _db.Shifts.FirstOrDefaultAsync(s => s.Id == id);
 
         if (shift == null)
         {
-            throw new KeyNotFoundException($"Shift with id:{updatedShift.Id} was not found");
+            throw new KeyNotFoundException($"Shift with id:{id} was not found");
         }
 
         if (updatedShift.Date.HasValue)

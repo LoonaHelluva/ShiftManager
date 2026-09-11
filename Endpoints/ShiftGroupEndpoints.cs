@@ -1,5 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
+using Microsoft.AspNetCore.Http.HttpResults;
+using SQLitePCL;
 
 namespace HelipadManager;
 
@@ -11,45 +13,140 @@ public static class ShiftEndpoints
 
         var shifts = app.MapGroup("/shifts");
 
-        //GETters
+        //GET
         shifts.MapGet("/", async (IShiftDbService dbService) =>
         {
-            List<Shift> shifts = await dbService.GetShiftsAsync();
-
-            if (shifts.Count == 0)
+            try
             {
-                return Results.NotFound();
-            }
+                List<ShiftDto> shifts = await dbService.GetShiftsAsync();
 
-            return Results.Ok(shifts);
+                return Results.Ok(shifts);
+            }
+            catch (KeyNotFoundException)
+            {
+                return Results.Ok(new List<ShiftDto>());
+            }
+            catch (Exception e)
+            {
+                return Results.InternalServerError(e.Message);
+            }
         });
 
         shifts.MapGet("/{id}", async (int id, IShiftDbService dbService) =>
         {
-            var shift = await dbService.GetShiftByIdAsync(id);
-
-            if (shift == null)
+            try
             {
-                return Results.NotFound();
+                ShiftDto shift = await dbService.GetShiftByIdAsync(id);
+
+                return Results.Ok(shift);
+            }
+            catch (KeyNotFoundException NotFound)
+            {
+                return Results.NotFound(NotFound.Message);
+            }
+            catch (Exception e)
+            {
+                return Results.InternalServerError(e.Message);
+            }
+        }).
+        AddEndpointFilter(async (context, next) =>
+        {
+            int idCheck = context.GetArgument<int>(0);
+
+            if (idCheck < 0)
+            {
+                return Results.BadRequest("Incorrect id");
             }
 
-            return Results.Ok(shift);
+            return await next(context);
         });
 
         //POSTers
         shifts.MapPost("/", async (AddShiftDto shift, IShiftDbService dbservice) =>
         {
-            Shift addedShift = await dbservice.AddShiftAsync(shift);
+            ShiftDto addedShift = await dbservice.AddShiftAsync(shift);
 
             return addedShift.Id == 0 ? Results.BadRequest(addedShift)
                                         : Results.Created(
                                             projectUri + addedShift.Id,
                                             addedShift
                                             );
+        }).
+        AddEndpointFilter(async (context, next) =>
+        {
+            AddShiftDto shiftCheck = context.GetArgument<AddShiftDto>(0);
+
+            if (shiftCheck == null)
+            {
+                return Results.BadRequest("Shift entity is null");
+            }
+
+            return await next(context);
         });
 
         //PUTers
+        shifts.MapPut("/{id}", async (int id, UpdateShiftDto shiftToUpdate, IShiftDbService dbService) =>
+        {
+            try
+            {
+                await dbService.UpdateShiftById(id, shiftToUpdate);
+
+                return Results.NoContent();
+            }
+            catch (Exception e)
+            {
+                return Results.InternalServerError(e.Message);
+            }
+        }).
+        AddEndpointFilter(async (context, next) =>
+        {
+            int idCheck = context.GetArgument<int>(0);
+            UpdateShiftDto shiftCheck = context.GetArgument<UpdateShiftDto>(1);
+
+            if (shiftCheck == null)
+            {
+                return Results.BadRequest("Shift entity is incorrect");
+            }
+            if (idCheck < 0)
+            {
+                return Results.BadRequest("Incorrect shift id");
+            }
+            if (!shiftCheck.Date.HasValue && !shiftCheck.ManagerId.HasValue)
+            {
+                return Results.BadRequest("Update shift values are empty");
+            }
+            if (shiftCheck.ManagerId.HasValue && shiftCheck.ManagerId.Value < 0)
+            {
+                return Results.BadRequest("Manager Id is less than 0");
+            }
+
+            return await next(context);
+        });
 
         //DELETEers
+        shifts.MapDelete("/{id}", async (int id, IShiftDbService dbService) =>
+        {
+            try
+            {
+                await dbService.DeleteShiftById(id);
+
+                return Results.NoContent();
+            }
+            catch (Exception e)
+            {
+                return Results.InternalServerError(e.Message);
+            }
+        }).
+        AddEndpointFilter(async (context, next) =>
+        {
+            int idCheck = context.GetArgument<int>(0);
+
+            if (idCheck < 0)
+            {
+                return Results.BadRequest("Id is less than 0");
+            }
+
+            return await next(context);
+        });
     }
 }
