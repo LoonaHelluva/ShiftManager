@@ -2,6 +2,7 @@ namespace HelipadManager;
 
 public record AddHelicopterDto(
     int TailNum,
-    string Usability,
-    string FlightStatus
+    string Usability = "Ok",
+    string FlightStatus = "Grounded",
+    int? ShiftId = null
 );

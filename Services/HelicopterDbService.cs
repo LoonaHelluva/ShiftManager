@@ -15,12 +15,28 @@ public class HelicopterDbService : IHelicopterDbService
     //Create
     public async Task<Helicopter> AddHeliAsync(AddHelicopterDto helicopterDto)
     {
+        //Getting shift by id from dto
+        Shift? shift = await _db.Shifts.
+                                        AsNoTracking()
+                                        .FirstOrDefaultAsync(s => s.Id == helicopterDto.ShiftId);
+
+        //Checking if shift exists and throwing exception if not
+        if (shift == null)
+        {
+            throw new KeyNotFoundException($"Shift by id: {helicopterDto.ShiftId} was not found");
+        }
+
+        //Setting new helicopter
         Helicopter newHelicopter = new(
                                         helicopterDto.Usability,
                                         helicopterDto.FlightStatus,
-                                        helicopterDto.TailNum);
+                                        helicopterDto.TailNum,
+                                        shift);
 
-        await _db.Helicopters.AddAsync(newHelicopter);
+        //Adding and saving chenges
+        await _db.Helicopters.AddAsync(newHelicopter);//Adding to Helicopter Table
+        shift.Helicopters.Add(newHelicopter); //Adding helicopter to Shift list
+
         await _db.SaveChangesAsync();
 
         return newHelicopter;
@@ -49,7 +65,7 @@ public class HelicopterDbService : IHelicopterDbService
     }
     public async Task<HelicopterDto> GetHeliWithListsByIdAsync(int id)
     {
-        var helicopter = await _db.Helicopters.FirstOrDefaultAsync(h => h.Id == id);
+        var helicopter = await _db.Helicopters.Include(h => h.Tasks).FirstOrDefaultAsync(h => h.Id == id);
 
         if (helicopter is null)
         {

@@ -13,10 +13,15 @@ public class Helicopter
     public List<HeliTask> Tasks { get; set; } = new();
     public List<Shift> Shifts { get; set; } = new();
 
-    public Helicopter(string usability, string flightStatus, int tailNum)
+    public Helicopter(string usability, string flightStatus, int tailNum, Shift? shift = null)
     {
         Usability = usability;
         FlightStatus = flightStatus;
         TailNum = tailNum;
+
+        if (shift != null)
+        {
+            Shifts.Add(shift);
+        }
     }
 }

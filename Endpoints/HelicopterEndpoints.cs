@@ -28,9 +28,16 @@ public static class HelicopterEndpoints
         //POST
         helis.MapPost("/", async (AddHelicopterDto heli, IHelicopterDbService dbService) =>
         {
-            var newHeli = await dbService.AddHeliAsync(heli);
+            try
+            {
+                var newHeli = await dbService.AddHeliAsync(heli);
 
-            return Results.Accepted(projectUri + newHeli.Id, newHeli);
+                return Results.Accepted(projectUri + newHeli.Id, newHeli);
+            }
+            catch (KeyNotFoundException e)
+            {
+                return Results.NotFound(e.Message);
+            }
         })
         .AddEndpointFilter(async (context, next) =>
         {
@@ -47,6 +54,10 @@ public static class HelicopterEndpoints
             if (heliCheck.FlightStatus == string.Empty && heliCheck.FlightStatus == " ")
             {
                 return Results.BadRequest();
+            }
+            if (heliCheck.ShiftId < 0)
+            {
+                return Results.BadRequest("Shift Id is less than 0");
             }
 
             return await next(context);

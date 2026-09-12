@@ -22,6 +22,7 @@ using (IServiceScope scope = app.Services.CreateScope())
 {
     ShiftDbContext db = scope.ServiceProvider.GetRequiredService<ShiftDbContext>();
     db.Database.Migrate();
+    await DbSeeder.SeedAsync(db);
 }
 
 app.MapShiftEndpoints();
