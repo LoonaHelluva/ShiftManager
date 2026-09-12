@@ -13,19 +13,52 @@ public class TaskDbService : ITaskDbService
     }
 
 
-    //Create
+    //Add task to DB
     public async Task<HeliTask> AddTaskAsync(AddTaskDto task)
     {
+        //Getting is helicopter and shift exists as bool
+        bool isHeliExists = await _db.Helicopters.AnyAsync(h => h.Id == task.HeliId);
+        bool isShiftExists = await _db.Shifts.AnyAsync(s => s.Id == task.ShiftId);
+
+        //Checking helicopter shift  for existance
+        if (isHeliExists == false)
+        {
+            throw new KeyNotFoundException($"Helicopter with id: {task.HeliId} was not found");
+        }
+        if (isShiftExists == false)
+        {
+            throw new KeyNotFoundException($"Shift with id: {task.ShiftId} was not found");
+        }
+
+        //Check of staff member
+        List<StaffMember> staffs = new List<StaffMember>(); //New list of StaffMember to add to the task
+        foreach (var id in task.Executor)
+        {
+            //Getting is staff exist
+            StaffMember? staff = await _db.StaffMembers.FirstOrDefaultAsync(s => s.Id == id);
+
+            //Checking the answer
+            if (staff == null)
+            {
+                throw new KeyNotFoundException($"User with id: {id} was not found");
+            }
+
+            staffs.Add(staff); //Adding to list
+        }
+
+        //Creating new task
         HeliTask newTask = new HeliTask(
             task.Title,
             task.Description,
             task.ShiftId,
             task.HeliId,
-            task.Executor
+            staffs
             );
 
+        //Adding new task to table and saving changes
         await _db.Tasks.AddAsync(newTask);
         await _db.SaveChangesAsync();
+
         return newTask;
     }
 

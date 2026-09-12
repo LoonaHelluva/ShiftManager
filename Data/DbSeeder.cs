@@ -89,32 +89,8 @@ public static class DbSeeder
 
             tasks.Add(newTask);
             await db.Tasks.AddAsync(newTask);
-            db.Entry(newTask).Property<int?>("HelicopterId").CurrentValue = newTask.HeliId;
             await db.SaveChangesAsync();
         }
 
-        List<SubTask> subTasks = await db.SubTasks.OrderBy(s => s.Id).Take(3).ToListAsync();
-
-        while (subTasks.Count < 3)
-        {
-            SubTask newSubTask = subTasks.Count == 0
-                ? new SubTask("Заполнить чек-лист осмотра", tasks[0].Id)
-                : subTasks.Count == 1
-                    ? new SubTask("Проверить уровень топлива", tasks[0].Id)
-                    : new SubTask("Проверить журнал обслуживания", tasks[1].Id);
-
-            if (subTasks.Count == 0)
-            {
-                newSubTask.Executors.Add(engineer);
-            }
-            else if (subTasks.Count == 1)
-            {
-                newSubTask.Executors.Add(technician);
-            }
-
-            subTasks.Add(newSubTask);
-            await db.SubTasks.AddAsync(newSubTask);
-            await db.SaveChangesAsync();
-        }
     }
 }

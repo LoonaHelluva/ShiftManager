@@ -3,6 +3,7 @@ using System;
 using HelipadManager;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,27 +11,14 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HelipadManager.Migrations
 {
     [DbContext(typeof(ShiftDbContext))]
-    partial class ShiftDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260912215628_RemoveSubTasks")]
+    partial class RemoveSubTasks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.11");
-
-            modelBuilder.Entity("HeliTaskStaffMember", b =>
-                {
-                    b.Property<int>("ExecutorsId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("TasksId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("ExecutorsId", "TasksId");
-
-                    b.HasIndex("TasksId");
-
-                    b.ToTable("HeliTaskStaffMembers", (string)null);
-                });
 
             modelBuilder.Entity("HelicopterShift", b =>
                 {
@@ -44,7 +32,7 @@ namespace HelipadManager.Migrations
 
                     b.HasIndex("ShiftsId");
 
-                    b.ToTable("ShiftHelicopters", (string)null);
+                    b.ToTable("HelicopterShift");
                 });
 
             modelBuilder.Entity("HelipadManager.HeliTask", b =>
@@ -127,6 +115,9 @@ namespace HelipadManager.Migrations
                     b.Property<int>("ArmyNumber")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("HeliTaskId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsManager")
                         .HasColumnType("INTEGER");
 
@@ -139,24 +130,11 @@ namespace HelipadManager.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("HeliTaskId");
+
                     b.HasIndex("ShiftId");
 
                     b.ToTable("StaffMembers");
-                });
-
-            modelBuilder.Entity("HeliTaskStaffMember", b =>
-                {
-                    b.HasOne("HelipadManager.StaffMember", null)
-                        .WithMany()
-                        .HasForeignKey("ExecutorsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("HelipadManager.HeliTask", null)
-                        .WithMany()
-                        .HasForeignKey("TasksId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("HelicopterShift", b =>
@@ -191,9 +169,18 @@ namespace HelipadManager.Migrations
 
             modelBuilder.Entity("HelipadManager.StaffMember", b =>
                 {
+                    b.HasOne("HelipadManager.HeliTask", null)
+                        .WithMany("Executors")
+                        .HasForeignKey("HeliTaskId");
+
                     b.HasOne("HelipadManager.Shift", null)
                         .WithMany("StaffMembers")
                         .HasForeignKey("ShiftId");
+                });
+
+            modelBuilder.Entity("HelipadManager.HeliTask", b =>
+                {
+                    b.Navigation("Executors");
                 });
 
             modelBuilder.Entity("HelipadManager.Helicopter", b =>

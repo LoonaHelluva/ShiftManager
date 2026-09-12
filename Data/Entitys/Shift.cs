@@ -14,6 +14,10 @@ public class Shift
     public List<Helicopter> Helicopters { get; set; } = new();
     public List<StaffMember> StaffMembers { get; set; } = new();
 
+    private Shift()
+    {
+    }
+
     public Shift(DateOnly date, int managerId)
     {
         Date = date;

@@ -1,0 +1,505 @@
+Ты помогаешь мне развивать мой учебный backend-проект ShiftManager.
+
+Отвечай на русском языке. Объясняй понятным языком, потому что я изучаю C#, ASP.NET Core, EF Core, LINQ и Minimal API. Если я задаю вопрос о концепции, сначала объясни её простыми словами, затем покажи небольшой пример на моём проекте.
+
+Не изменяй код без моей явной просьбы. Если я прошу исправить или добавить функциональность, сначала изучи связанные файлы, сформулируй причину проблемы и только потом вноси минимальные изменения. Не делай общий рефакторинг без необходимости. После изменений обязательно запускай подходящую проверку: build, запуск приложения, HTTP-запрос или CLI-тест.
+
+## Актуальное состояние проекта на 2026-09-13
+
+Этот раздел имеет приоритет над более старыми описаниями ниже. Некоторые старые разделы сохраняют историю разработки и могут содержать уже неактуальные сведения.
+
+Выполнено:
+
+- CRUD для Staff и Shift был завершён ранее.
+- Добавлен идемпотентный runtime-seeder в `Data/DbSeeder.cs`.
+- При старте выполняются `Database.Migrate()` и `DbSeeder.SeedAsync(db)`.
+- Seeder создаёт 3 StaffMember, 2 Helicopter, 2 Shift и 2 HeliTask.
+- Проверки существования связей добавлены:
+    - Shift требует существующего StaffMember с `IsManager == true`;
+    - Helicopter требует существующего Shift;
+    - Task требует существующих Helicopter и Shift;
+    - каждый Executor Task должен существовать в StaffMembers.
+- CLI обновлён: при создании Task отправляется список Id исполнителей, а не объекты StaffMember.
+- Во все entity добавлены приватные parameterless-конструкторы для EF Core.
+- `SubTask` полностью удалён из runtime-модели, DTO, seeder и `DbContext`.
+- Удалена таблица `SubTasks` и колонка `StaffMembers.SubTaskId` через миграцию `20260912215628_RemoveSubTasks`.
+- Локальная тестовая SQLite-база была пересоздана с нуля и успешно прошла весь migration chain.
+
+Актуальный контракт создания Task:
+
+```json
+{
+    "title": "Task title",
+    "description": "Task description",
+    "executor": [1, 2],
+    "heliId": 1,
+    "shiftId": 1
+}
+```
+
+Подтверждённые проверки:
+
+- валидный Manager: `201 Created`;
+- отсутствующий Manager: `400 Bad Request`;
+- StaffMember без `IsManager`: `400 Bad Request`;
+- Helicopter с валидным Shift: `202 Accepted`;
+- Helicopter с отсутствующим или пустым Shift: `404 Not Found`;
+- Task с валидными зависимостями и Executors: `201 Created`;
+- отсутствующий Executor, Helicopter или Shift: `404 Not Found`;
+- `dotnet build` для API и CLI проходит;
+- `dotnet ef migrations has-pending-model-changes` сообщает, что pending changes отсутствуют;
+- `PRAGMA foreign_key_check` на чистой базе не обнаружил ошибок.
+
+Актуальные миграции:
+
+- `20260908210911_InitialCreate`;
+- `20260912163418_HelicopterAlignment`;
+- `20260912215628_RemoveSubTasks`.
+
+## Текущие ограничения и следующий приоритет
+
+Главная оставшаяся проблема связей: Task ↔ StaffMember всё ещё моделируется через один nullable shadow FK `StaffMembers.HeliTaskId`. Поэтому один сотрудник не может корректно быть исполнителем нескольких Task: последняя задача перезаписывает FK. Для правильной модели нужна many-to-many join table, например `HeliTaskStaffMember`.
+
+Другие задачи после этого:
+
+1. Настроить Task ↔ StaffMember как явную many-to-many связь.
+2. Явно описать связи в `OnModelCreating`, где это необходимо.
+3. Добавить `Include` или специализированные DTO для возврата связанных Tasks, Helicopters и Shifts. Сейчас часть GET возвращает пустые коллекции, потому что навигации не загружаются.
+4. Проверить DELETE-сценарии для связанных сущностей и отсутствие записей.
+5. Добавить автоматические integration tests для связей и проверок зависимостей.
+6. Провести финальное тестирование MVP, затем code review и публикацию backend на GitHub.
+
+## Проект
+
+Название: ShiftManager / HelipadManager.
+
+Репозиторий:
+https://github.com/LoonaHelluva/ShiftManager
+
+Ветка: mvp
+
+Рабочая директория:
+`/home/loona/Work/tries/Projects/ShiftManager`
+
+Технологии:
+
+- ASP.NET Core Minimal API
+- .NET 10
+- Entity Framework Core 10.0.11
+- SQLite
+- Nullable reference types включены
+- ImplicitUsings включены
+- отдельный консольный HTTP-клиент HelipadCli
+- контроллеров нет, используются endpoint groups
+- автоматических тестов пока нет
+
+Основные команды:
+
+```bash
+dotnet restore
+dotnet build
+dotnet run --launch-profile http
+dotnet run --project ./HelipadCli/HelipadCli.csproj
+dotnet tool restore
+dotnet ef migrations list
+dotnet ef database update
+```
+
+API обычно запускается на:
+
+```text
+http://localhost:5241
+```
+
+Для временных проверок использовался также:
+
+```text
+http://127.0.0.1:5287
+```
+
+SQLite-файл:
+
+```text
+ShiftManagerDb.db
+```
+
+## Структура проекта
+
+Главные файлы:
+
+- `Program.cs` — регистрация DbContext и сервисов, миграции, сидинг, endpoint mapping.
+- `Data/ShiftDbContext.cs` — EF Core DbContext.
+- `Data/DbSeeder.cs` — тестовое заполнение базы.
+- `Data/Entitys/Helicopter.cs`
+- `Data/Entitys/HeliTask.cs`
+- `Data/Entitys/Shift.cs`
+- `Data/Entitys/StaffMember.cs`
+- `Data/Entitys/SubTask.cs`
+- `Services/HelicopterDbService.cs`
+- `Services/TaskDbService.cs`
+- `Services/ShiftDbService.cs`
+- `Services/StaffDbService.cs`
+- `Endpoints/HelicopterEndpoints.cs`
+- `Endpoints/TaskGoupEndpoints.cs`
+- `Endpoints/ShiftGroupEndpoints.cs`
+- `Endpoints/StaffGroupEndpoints.cs`
+- `Dtos/`
+- `Migrations/`
+- `HelipadCli/Program.cs`
+- `HelipadCli/README.md`
+
+Названия `Entitys`, `TaskGoupEndpoints`, `Desctiprion` являются существующими опечатками. Не переименовывай их без явной необходимости, чтобы не создавать лишние изменения.
+
+## Сущности
+
+### Helicopter
+
+Содержит:
+
+```csharp
+int Id
+int TailNum
+string Usability
+string FlightStatus
+List<HeliTask> Tasks
+List<Shift> Shifts
+```
+
+Конструктор:
+
+```csharp
+Helicopter(string usability, string flightStatus, int tailNum)
+```
+
+### StaffMember
+
+Содержит:
+
+```csharp
+int Id
+string Name
+int ArmyNumber
+bool IsManager
+bool IsNightShift
+```
+
+Также имеются коллекции задач и смен, но часть из них объявлена полями, а не свойствами:
+
+```csharp
+public List<HeliTask> Tasks = new();
+public List<Shift> Shifts = new();
+```
+
+### Shift
+
+Содержит:
+
+```csharp
+int Id
+DateOnly Date
+int ManagerId
+List<HeliTask> ManagerTasks
+List<Helicopter> Helicopters
+List<StaffMember> StaffMembers
+```
+
+### HeliTask
+
+Содержит:
+
+```csharp
+int Id
+string Title
+string Desctiprion
+bool IsDone
+int ShiftId
+int HeliId
+List<SubTask> SubTasks
+List<StaffMember> Executors
+```
+
+Важно: `Desctiprion` написано с ошибкой, не переименовывай автоматически.
+
+### SubTask
+
+Содержит:
+
+```csharp
+int Id
+string Title
+string Desctiprion
+bool IsDone
+int TaskId
+List<StaffMember> Executors
+```
+
+## Связи
+
+Задуманные связи:
+
+- Shift ↔ Helicopter — many-to-many через таблицу `HelicopterShift`.
+- Shift → HeliTask — one-to-many через `ShiftId`.
+- Helicopter → HeliTask — one-to-many.
+- HeliTask → SubTask — one-to-many.
+- Shift → StaffMember — связь сотрудников со сменой.
+- HeliTask → StaffMember — исполнители задачи.
+- SubTask → StaffMember — исполнители подзадачи.
+- Shift.ManagerId должен ссылаться на StaffMember.
+
+## Важная проблема EF-модели
+
+Текущая миграция была создана с shadow foreign keys:
+
+- в Tasks есть `HelicopterId`, хотя в сущности есть `HeliId`;
+- в SubTasks есть `HeliTaskId`, хотя в сущности есть `TaskId`;
+- в StaffMembers есть nullable `HeliTaskId`, `ShiftId`, `SubTaskId`;
+- `Shift.ManagerId` в текущей миграции не оформлен как FK на StaffMembers.
+
+Из-за этого нельзя автоматически предполагать, что `HeliId` и `TaskId` реально используются EF как внешние ключи.
+
+Перед исправлением связей обязательно проверь:
+
+- `Data/ShiftDbContext.cs`;
+- текущую миграцию;
+- `Migrations/ShiftDbContextModelSnapshot.cs`;
+- entity-классы;
+- фактические SQL-запросы EF при запуске.
+
+Желаемое направление на будущее:
+
+1. Явно настроить связи в `OnModelCreating`.
+2. Выбрать единые имена FK.
+3. Убрать неоднозначность между `HeliId`/`HelicopterId` и `TaskId`/`HeliTaskId`.
+4. Добавить FK для `Shift.ManagerId`.
+5. Создать новую корректную миграцию только после согласования модели.
+
+Не меняй структуру связей молча: сначала объясни, какие FK сейчас реально существуют и что изменится.
+
+## Endpoint-группы
+
+Маршруты:
+
+```text
+/staff/
+/helis/
+/shifts/
+/tasks/
+```
+
+Каждая группа в основном содержит:
+
+- GET списка;
+- GET по Id;
+- POST;
+- PUT;
+- DELETE.
+
+Для SubTask отдельных endpoints пока нет.
+
+Важно учитывать trailing slash: некоторые группы объявлены как `/staff/`, `/helis/`, `/tasks/`, а Shift — как `/shifts`. Перед тестированием проверяй реальные маршруты в endpoint-файлах.
+
+## Уже выполненная работа
+
+### Task Service
+
+Реализованы:
+
+- DTO для добавления, получения и обновления задач;
+- поля `HeliId` и `ShiftId`;
+- список исполнителей `List<StaffMember>`;
+- `IsDone` в Update DTO;
+- CRUD для задач;
+- task endpoints;
+- поддержка задач в CLI;
+- исправление проблемы с отсутствующей таблицей Tasks через миграции и запуск `Database.Migrate()`.
+
+### Shift и Staff CRUD
+
+Выполнены:
+
+- DTO для Shift и Staff;
+- Add, Get, Update DTO;
+- CRUD-сервисы;
+- endpoint groups;
+- регистрация сервисов в `Program.cs`;
+- CRUD endpoints для Shift и Staff;
+- команды Shift и Staff в CLI;
+- проверки отрицательного Id;
+- проверка пустого Update DTO;
+- контрольные проверки API и CLI.
+
+Поле `Id` было убрано из Update DTO. Id передаётся через URL:
+
+```text
+PUT /staff/{id}
+PUT /shifts/{id}
+PUT /helis/{id}
+PUT /tasks/{id}
+```
+
+### Сидинг данных
+
+Добавлен `Data/DbSeeder.cs`.
+
+При запуске после миграций:
+
+```csharp
+db.Database.Migrate();
+await DbSeeder.SeedAsync(db);
+```
+
+Seeder создаёт тестовые данные:
+
+- 3 StaffMember;
+- 2 Helicopter;
+- 2 Shift;
+- 2 HeliTask;
+- 3 SubTask;
+- связи Shift ↔ Helicopter;
+- связи Shift ↔ StaffMember;
+- связи Task ↔ StaffMember;
+- связи SubTask ↔ StaffMember.
+
+Seeder старается не создавать дубликаты и дозаполнять пустые таблицы, если база частично заполнена.
+
+В текущем варианте seeder вручную работает с shadow-свойством:
+
+```csharp
+db.Entry(task).Property<int?>("HelicopterId").CurrentValue = task.HeliId;
+```
+
+Это временное решение, связанное с текущей несовместимостью entity-классов и миграции. Не считай его окончательным дизайном.
+
+База была очищена и проверена с нуля. После запуска были получены:
+
+- 3 сотрудника;
+- 2 вертолёта;
+- 2 смены;
+- 2 задачи;
+- 3 подзадачи;
+- 2 записи в `HelicopterShift`.
+
+## Что осталось сделать
+
+Главные текущие задачи:
+
+1. Настроить явные связи между таблицами.
+2. Исправить несоответствия FK и shadow properties.
+3. Добавить helper-ы или сервисную проверку существования связанных сущностей.
+4. Перед созданием Shift проверять существование Manager.
+5. Перед созданием Task проверять:
+   - существование Shift;
+   - существование Helicopter;
+   - существование каждого Executor.
+6. Перед созданием SubTask проверять существование Task.
+7. Проверять существование сущностей перед запросами и изменениями.
+8. Определиться с обработкой ошибок EF Core.
+9. Добавить focused/integration tests для MVP.
+10. Позже провести code review и рефакторинг.
+11. После завершения MVP опубликовать backend на GitHub.
+
+## Что я изучал и о чём спрашивал
+
+Я задавал вопросы по следующим темам:
+
+- разница между `Where` и `FirstOrDefault`;
+- использование `Select` для проекции entity в DTO;
+- как получить один DTO через `FirstOrDefaultAsync`;
+- `DateOnly?`, `HasValue` и `Value`;
+- `bool?` и безопасное присваивание после проверки;
+- обработка `KeyNotFoundException`;
+- типичные исключения EF Core, включая `DbUpdateException`;
+- работа с `Include`;
+- `ThenInclude`;
+- почему `List.Add()` нельзя использовать с `await`;
+- ошибка `Cannot await 'void'`;
+- тестирование API через CLI;
+- edge cases для Update endpoints;
+- очистка SQLite перед тестированием;
+- запуск миграций;
+- проблемы занятого порта;
+- проблема отсутствующей таблицы Tasks;
+- ограничения и стоимость использования ИИ.
+
+Основное объяснение по `Include`:
+
+```csharp
+var helicopter = await _db.Helicopters
+    .Include(h => h.Tasks)
+    .Include(h => h.Shifts)
+    .FirstOrDefaultAsync(h => h.Id == id);
+```
+
+Для вложенных данных:
+
+```csharp
+var task = await _db.Tasks
+    .Include(t => t.SubTasks)
+        .ThenInclude(st => st.Executors)
+    .Include(t => t.Executors)
+    .FirstOrDefaultAsync(t => t.Id == id);
+```
+
+`List<T>.Add()` — синхронный метод, поэтому правильно:
+
+```csharp
+collection.Add(entity);
+await db.SaveChangesAsync();
+```
+
+Неправильно:
+
+```csharp
+await collection.Add(entity);
+```
+
+## Известные проблемы проекта
+
+Учитывай следующие риски:
+
+- `HeliId` не совпадает с фактическим shadow FK `HelicopterId`.
+- `TaskId` не совпадает с фактическим shadow FK `HeliTaskId`.
+- `ManagerId` пока не гарантирует существование сотрудника.
+- `TaskDbService.AddTaskAsync` пока не проверяет существование Shift, Helicopter и Executors.
+- `ShiftDbService.AddShiftAsync` пока не проверяет Manager.
+- Task DTO принимает полноценные `StaffMember`, а не список Id.
+- Task Service возвращает entity напрямую, что может привести к циклической JSON-сериализации.
+- `GetHeliWithListsByIdAsync` нужно проверять на корректное включение всех навигаций.
+- Часть навигаций объявлена полями вместо свойств.
+- Некоторые endpoint-фильтры используют неправильные проверки строк:
+
+```csharp
+value == string.Empty && value == " "
+```
+
+Такая проверка не может одновременно быть истинной. Обычно нужна проверка через:
+
+```csharp
+string.IsNullOrWhiteSpace(value)
+```
+
+- Некоторые DELETE-методы не проверяют, существовала ли удаляемая запись.
+- `ShiftDbService.DeleteShiftById` подавляет исключения через пустой `catch`.
+- Обработка HTTP-ошибок пока неоднородна.
+- Автоматических тестов нет.
+- В проекте встречаются опечатки в именах, но сейчас приоритет — работающий MVP, а не косметический рефакторинг.
+
+## Правила взаимодействия со мной
+
+- Отвечай на русском.
+- Не повторяй весь контекст в каждом ответе.
+- Если вопрос простой, отвечай коротко.
+- Если я прошу объяснение, объясняй сначала смысл, потом код.
+- Не пиши код без явной просьбы.
+- Если я прошу проверить проект, сначала используй существующие файлы и команды проекта.
+- При code review сначала показывай проблемы по степени важности, с файлами и строками, затем краткое резюме.
+- Не исправляй unrelated bugs без согласования.
+- Не создавай новую архитектуру без необходимости.
+- Не меняй миграции и модель связей молча.
+- При работе с EF сначала выясняй, какой FK реально использует миграция.
+- После изменения запускай `dotnet build`.
+- Для изменений API проверяй endpoint через HTTP или CLI.
+- Если проверка не выполнялась, честно укажи это.
+- Предпочитай маленькие последовательные изменения.
+- Если есть несколько вариантов, покажи рекомендуемый вариант и кратко объясни trade-off.
+- Помни, что я хочу понимать код, а не только получить готовый патч.

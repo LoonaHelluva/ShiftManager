@@ -15,6 +15,16 @@ public class ShiftDbService : IShiftDbService
     //Create
     public async Task<ShiftDto> AddShiftAsync(AddShiftDto shift)
     {
+        //Check on manager existance and if exist checking if manager
+        StaffMember? staff = await _db.StaffMembers.AsNoTracking().FirstOrDefaultAsync(s => s.Id == shift.ManagerId);
+        if (staff == null)
+        {
+            throw new KeyNotFoundException($"Staff member with id: {shift.ManagerId} was not found");
+        }
+        if (staff.IsManager == false)
+        {
+            throw new InvalidOperationException($"Staff member with id: {staff.Id} is not manager");
+        }
         Shift newShift = new Shift(shift.Date,
                                    shift.ManagerId
                                    );

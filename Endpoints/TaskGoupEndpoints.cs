@@ -52,9 +52,39 @@ public static class TaskGoupEndpoints
         //POST
         tasks.MapPost("/", async (AddTaskDto taskToAdd, ITaskDbService dbService) =>
         {
-            HeliTask task = await dbService.AddTaskAsync(taskToAdd);
+            try
+            {
+                HeliTask task = await dbService.AddTaskAsync(taskToAdd);
 
-            return Results.Created(projectUri + task.Id, task);
+                return Results.Created(projectUri + task.Id, task);
+            }
+            catch (KeyNotFoundException e)
+            {
+                return Results.NotFound(e.Message);
+            }
+            catch (Exception e)
+            {
+                return Results.InternalServerError(e.Message);
+            }
+        }).
+        AddEndpointFilter(async (context, next) =>
+        {
+            AddTaskDto taskCheck = context.GetArgument<AddTaskDto>(0);
+
+            if (taskCheck.HeliId < 0)
+            {
+                return Results.BadRequest("Helicopter id is less than 0");
+            }
+            if (taskCheck.ShiftId < 0)
+            {
+                return Results.BadRequest("Shift id is less than 0");
+            }
+            if (taskCheck.Executor.Count == 0)
+            {
+                return Results.BadRequest("Executors ammount less than 1");
+            }
+
+            return await next(context);
         });
 
         //PUT

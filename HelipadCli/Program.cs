@@ -125,8 +125,9 @@ async Task CreateHelicopterAsync()
     int tailNum = ReadInt("Tail number: ");
     string usability = ReadText("Usability: ");
     string flightStatus = ReadText("Flight status: ");
+    int shiftId = ReadInt("Id смены: ");
 
-    AddHelicopterRequest request = new(tailNum, usability, flightStatus);
+    AddHelicopterRequest request = new(tailNum, usability, flightStatus, shiftId);
     await SendAsync(() => httpClient.PostAsJsonAsync("/helis/", request, jsonOptions));
 }
 
@@ -165,7 +166,7 @@ async Task CreateTaskAsync()
     string description = ReadText("Description: ");
     int heliId = ReadInt("Id вертолёта: ");
     int shiftId = ReadInt("Id смены: ");
-    List<StaffMemberRequest> executor = ReadExecutors();
+    List<int> executor = ReadExecutors();
 
     AddTaskRequest request = new(title, description, executor, heliId, shiftId);
     await SendAsync(() => httpClient.PostAsJsonAsync("/tasks/", request, jsonOptions));
@@ -276,19 +277,15 @@ async Task DeleteStaffAsync()
     await SendAsync(() => httpClient.DeleteAsync($"/staff/{id}"));
 }
 
-List<StaffMemberRequest> ReadExecutors()
+List<int> ReadExecutors()
 {
     int count = ReadNonNegativeInt("Количество исполнителей: ");
-    List<StaffMemberRequest> executors = new();
+    List<int> executors = new();
 
     for (int index = 1; index <= count; index++)
     {
         Console.WriteLine($"Исполнитель {index}:");
-        int id = ReadInt("  Id: ");
-        string name = ReadText("  Name: ");
-        int armyNumber = ReadInt("  Army number: ");
-        bool isManager = ReadBool("  Is manager (true/false): ");
-        executors.Add(new StaffMemberRequest(id, name, armyNumber, isManager));
+        executors.Add(ReadInt("  Id: "));
     }
 
     return executors;
@@ -449,11 +446,10 @@ string TryFormatJson(string responseBody)
     }
 }
 
-record AddHelicopterRequest(int TailNum, string Usability, string FlightStatus);
+record AddHelicopterRequest(int TailNum, string Usability, string FlightStatus, int ShiftId);
 record UpdateHelicopterRequest(int TailNum = -1, string? Usability = null, string? FlightStatus = null);
-record AddTaskRequest(string Title, string Description, List<StaffMemberRequest> Executor, int HeliId, int ShiftId);
+record AddTaskRequest(string Title, string Description, List<int> Executor, int HeliId, int ShiftId);
 record UpdateTaskRequest(string? Title = null, string? Description = null, bool? IsDone = null);
-record StaffMemberRequest(int Id, string Name, int ArmyNumber, bool IsManager);
 record AddShiftRequest(DateOnly Date, int ManagerId);
 record UpdateShiftRequest(DateOnly? Date = null, int? ManagerId = null);
 record AddStaffRequest(string Name, int ArmyNumber, bool IsManager);

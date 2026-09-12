@@ -10,10 +10,9 @@ public class HeliTask
     public string Desctiprion { get; set; } = String.Empty;
     public bool IsDone { get; set; } = false;
 
-    public List<SubTask> SubTasks { get; set; } = new();
     public List<StaffMember> Executors { get; set; } = new();
     public int ShiftId { get; set; } //REQUIRED
-    public int HeliId { get; set; } //REQUIRED
+    public int HelicopterId { get; set; } //REQUIRED
 
     private HeliTask()
     {
@@ -24,7 +23,7 @@ public class HeliTask
         Title = title;
         Desctiprion = description;
         ShiftId = shiftId;
-        HeliId = heliId;
+        HelicopterId = heliId;
         Executors = executor;
     }
 }

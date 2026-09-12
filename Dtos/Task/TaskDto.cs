@@ -5,7 +5,6 @@ public record TaskDto(
     string Title,
     string Description,
     bool IsDone,
-    List<SubTask> SubTasks,
     List<StaffMember> Executors,
     int ShiftId,
     int HeliId

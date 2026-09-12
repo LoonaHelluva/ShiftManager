@@ -64,13 +64,24 @@ public static class ShiftEndpoints
         //POSTers
         shifts.MapPost("/", async (AddShiftDto shift, IShiftDbService dbservice) =>
         {
-            ShiftDto addedShift = await dbservice.AddShiftAsync(shift);
+            try
+            {
+                ShiftDto addedShift = await dbservice.AddShiftAsync(shift);
 
-            return addedShift.Id == 0 ? Results.BadRequest(addedShift)
-                                        : Results.Created(
-                                            projectUri + addedShift.Id,
-                                            addedShift
-                                            );
+                return addedShift.Id == 0 ? Results.BadRequest(addedShift)
+                                            : Results.Created(
+                                                projectUri + addedShift.Id,
+                                                addedShift
+                                                );
+            }
+            catch (KeyNotFoundException e)
+            {
+                return Results.BadRequest(e.Message);
+            }
+            catch (InvalidOperationException e)
+            {
+                return Results.BadRequest(e.Message);
+            }
         }).
         AddEndpointFilter(async (context, next) =>
         {

@@ -31,8 +31,16 @@ public static class HelicopterEndpoints
             try
             {
                 var newHeli = await dbService.AddHeliAsync(heli);
+                HelicopterDto newHeliDto = new(
+                    newHeli.Id,
+                    newHeli.TailNum,
+                    newHeli.Usability,
+                    newHeli.FlightStatus,
+                    newHeli.Tasks,
+                    newHeli.Shifts
+                    );
 
-                return Results.Accepted(projectUri + newHeli.Id, newHeli);
+                return Results.Accepted(projectUri + newHeli.Id, newHeliDto);
             }
             catch (KeyNotFoundException e)
             {
